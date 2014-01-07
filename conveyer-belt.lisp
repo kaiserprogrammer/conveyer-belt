@@ -4,19 +4,19 @@
 (in-package :belt)
 
 (defun make-belt (size)
-  (cons 0 (make-array (list size))))
+  (cons (1- size) (make-array (list size))))
 
 (defun drop (belt thing)
-  (incf (the fixnum (car belt)))
-  (when (= (the fixnum (car belt)) (the fixnum (length (the simple-vector (cdr belt)))))
-    (setf (car belt) 0))
-  (setf (svref (cdr belt) (car belt)) thing))
+  (when (zerop (the fixnum (car belt)))
+    (setf (car belt) (the fixnum (length (the simple-vector (cdr belt))))))
+  (setf (svref (cdr belt) (decf (the fixnum (car belt)))) thing))
 
 (defun pick (belt off)
-  (let ((noff (- (the fixnum (car belt)) (the fixnum off))))
-    (svref (cdr belt) (if (< (the fixnum noff) 0)
-                          (+ (length (the simple-vector (cdr belt))) noff)
-                          noff))))
+  (svref (cdr belt)
+         (let ((noff (+ (the fixnum (car belt)) (the fixnum off))))
+           (if (>= (the fixnum noff) (length (the simple-vector (cdr belt))))
+               (- (length (the simple-vector (cdr belt))) noff)
+               noff))))
 
 (remove-tests)
 
@@ -30,7 +30,7 @@
     (assert-equal 5 (pick belt 0))))
 
 (define-test multiple-drops ()
-  (with-belt (2)
+  (with-belt (5)
     (drop belt 1)
     (drop belt 10)
     (assert-equal 1 (pick belt 1))
